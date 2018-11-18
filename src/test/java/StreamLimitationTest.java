@@ -29,7 +29,7 @@ public class StreamLimitationTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void variable_of_stream_throw_exception() {
+    public void reuse_of_stream_throw_exception() {
 
         final Stream<LocalDate> stream = chronology2018Date.stream();
 
