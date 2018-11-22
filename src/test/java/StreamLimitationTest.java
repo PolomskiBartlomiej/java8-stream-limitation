@@ -3,7 +3,8 @@ import org.junit.Test;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -54,33 +55,46 @@ public class StreamLimitationTest {
 
     @Test
     public void stream_allow_to_side_effect() {
-        AtomicInteger one = new AtomicInteger(1);
+        List<Person> persons = Arrays.asList(
+                new Person("John", 40),
+                new Person("Anna", 20),
+                new Person("Martins", 25));
 
-        List<AtomicInteger> atomicIntegers = getAtomicIntegers(one);
+        List<Person> copyOfPerson = persons.stream().map(Person::clone).collect(Collectors.toList());
 
-
-        List<AtomicInteger> copyOfIntegers = getAtomicIntegers(one);
-
-        atomicIntegers.stream()
-                .map(integer -> { integer.set(2); return integer;})
+        persons.stream()
+                .map(person -> person.increaseAge(1))
                 .count();
 
-
-        assertNotEquals(toIntegers(atomicIntegers), toIntegers(copyOfIntegers));
+        assertNotEquals(persons, copyOfPerson);
     }
 
-    private List<AtomicInteger> getAtomicIntegers(AtomicInteger one) {
-        return Stream.iterate(one,
-                integer -> new AtomicInteger(integer.getAndIncrement()))
-                .limit(10)
-                .collect(Collectors.toList());
-    }
+    private class Person implements Cloneable {
 
-    private List<Integer> toIntegers(List<AtomicInteger> atomicIntegers) {
-        return atomicIntegers
-                .stream()
-                .map(AtomicInteger::get)
-                .collect(Collectors.toList());
-    }
+        Person(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
 
+        private String name;
+        private int age;
+
+        Person increaseAge(int age) {
+            this.age += age;
+            return this;
+        }
+
+        @Override
+        public Person clone() {
+           return new Person(name, age);
+        }
+
+        @Override
+        public String toString() {
+            return "Person{" +
+                    "name='" + name + '\'' +
+                    ", age=" + age +
+                    '}';
+        }
+    }
 }
